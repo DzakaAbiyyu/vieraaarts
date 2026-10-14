@@ -20,17 +20,21 @@ export default function Home() {
         .filter((artwork) => artwork.ratio === "16:9")
         .slice(0, 3);
 
-    // Data komisi disesuaikan agar konsisten
-    const commissionTypes = [
-        { name: "Bust Up", price: "Rp 70k / $15" },
-        { name: "Half Body", price: "Rp 90k / $20" },
-        { name: "Knee Up", price: "Rp 120k / $25" },
-        { name: "Full Body", price: "Rp 150k / $35" },
+    // Preview commission di Home: satu gambar per kategori.
+    // Mau ganti gambarnya? Ubah angka N pada "4_5-artwork-N.png".
+    // "category" harus sama dengan nama kategori di Admin (untuk mengambil harga).
+    const previewItems = [
+        { category: "Bust Up", label: "Bust Up", image: "/artworks/4_5-artwork-7.png", fallbackPrice: "Rp 70k / $15" },
+        { category: "Half Body", label: "Half Body", image: "/artworks/4_5-artwork-1.png", fallbackPrice: "Rp 90k / $20" },
+        { category: "Knee Up", label: "Knee Up", image: "/artworks/4_5-artwork-3.png", fallbackPrice: "Rp 120k / $25" },
+        { category: "Full body", label: "Full Body", image: "/artworks/4_5-artwork-6.png", fallbackPrice: "Rp 150k / $35" },
     ];
 
-    const commissionArtworks = artworks
-        .filter((artwork) => artwork.ratio === "4:5")
-        .slice(0, 4);
+    // Harga diambil dari database (yang diedit di Admin), kalau belum ada pakai harga cadangan
+    const getPrice = (item) => {
+        const data = commissionData?.[item.category];
+        return data ? `${data.idr} / ${data.usd}` : item.fallbackPrice;
+    };
 
     const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -200,16 +204,16 @@ export default function Home() {
 
                 {/* Grid Preview (Rasio Asli 4:5 Dijaga) */}
                 <div className="mx-auto mt-8 sm:mt-10 grid max-w-[1100px] grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    {commissionArtworks.map((artwork, index) => (
+                    {previewItems.map((item) => (
                         <div
-                            key={artwork.id}
+                            key={item.category}
                             className="group flex flex-col cursor-default"
                         >
                             {/* Container Gambar Kunci 4:5 + Object Contain */}
                             <div className="overflow-hidden rounded-2xl aspect-[5/4] bg-gray-100 border border-[#D0E2FF] flex items-center justify-center">
                                 <img
-                                    src={artwork.image}
-                                    alt={artwork.title}
+                                    src={item.image}
+                                    alt={item.label}
                                     className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
                                 />
                             </div>
@@ -217,10 +221,10 @@ export default function Home() {
                             {/* Text Info Below Image */}
                             <div className="mt-2.5 sm:mt-3 px-1">
                                 <h3 className="font-bold text-sm sm:text-base text-[#16377D]">
-                                    {commissionTypes[index]?.name || "Commission"}
+                                    {item.label}
                                 </h3>
                                 <p className="text-xs sm:text-sm font-semibold text-[#3B82F6]">
-                                    {commissionTypes[index]?.price || "Ask for price"}
+                                    {getPrice(item)}
                                 </p>
                             </div>
                         </div>
