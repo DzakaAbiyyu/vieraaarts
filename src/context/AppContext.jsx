@@ -9,6 +9,7 @@ export function AppProvider({ children }) {
     const [artworks, setArtworks] = useState([]);
     const [commissionStatus, setCommissionStatusState] = useState("OPEN");
     const [commissionData, setCommissionData] = useState({});
+    const [spreadsheet, setSpreadsheet] = useState({ label: "", url: "" });
     const [session, setSession] = useState(null);
     const [authLoading, setAuthLoading] = useState(true);
 
@@ -48,11 +49,18 @@ export function AppProvider({ children }) {
     const fetchStatus = async () => {
         const { data, error } = await supabase
             .from("commission_settings")
-            .select("status")
+            .select("status, spreadsheet_label, spreadsheet_url")
             .eq("id", 1)
             .single();
-        if (error) console.error("Gagal mengambil status:", error.message);
-        else setCommissionStatusState(data.status);
+        if (error) {
+            console.error("Gagal mengambil status:", error.message);
+        } else {
+            setCommissionStatusState(data.status);
+            setSpreadsheet({
+                label: data.spreadsheet_label || "",
+                url: data.spreadsheet_url || "",
+            });
+        }
     };
 
     const fetchPrices = async () => {
@@ -137,6 +145,17 @@ export function AppProvider({ children }) {
         return { ok: true };
     };
 
+    // ---------- LINK SPREADSHEET ----------
+    const updateSpreadsheet = async (label, url) => {
+        const { error } = await supabase
+            .from("commission_settings")
+            .update({ spreadsheet_label: label, spreadsheet_url: url })
+            .eq("id", 1);
+        if (error) return { ok: false, error: error.message };
+        setSpreadsheet({ label, url });
+        return { ok: true };
+    };
+
     // ---------- HARGA (CRUD) ----------
     const updateCommissionCategory = async (category, idr, usd) => {
         const { error } = await supabase
@@ -186,6 +205,8 @@ export function AppProvider({ children }) {
                 deleteArtwork,
                 commissionStatus,
                 setCommissionStatus,
+                spreadsheet,
+                updateSpreadsheet,
                 commissionData,
                 updateCommissionCategory,
                 addCommissionCategory,

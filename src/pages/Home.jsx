@@ -5,6 +5,16 @@ import { useApp } from "../context/AppContext";
 export default function Home() {
     const { commissionStatus, commissionData, artworks } = useApp();
 
+    // Nama bulan otomatis, berganti sendiri tiap bulan.
+    // Mau bahasa Indonesia (Oktober)? Ganti "en-US" menjadi "id-ID".
+    const monthName = new Date().toLocaleString("en-US", { month: "long" });
+
+    const statusColors = {
+        OPEN: "text-[#3B82F6]",
+        WAITLIST: "text-amber-500",
+        CLOSED: "text-red-500",
+    };
+
     // Artwork 16:9 untuk bagian "latest artwork"
     const latestArtworks = artworks
         .filter((artwork) => artwork.ratio === "16:9")
@@ -178,8 +188,8 @@ export default function Home() {
 
                 <div className="text-center">
                     <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold">
-                        Commission Status :{" "}
-                        <span className={`font-bold ${commissionStatus === "OPEN" ? "text-[#3B82F6]" : "text-red-500"}`}>
+                        {monthName} Commission Status :{" "}
+                        <span className={`font-bold ${statusColors[commissionStatus] || "text-red-500"}`}>
                             {commissionStatus}
                         </span>
                     </h2>

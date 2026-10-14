@@ -65,7 +65,15 @@ export default function Footer() {
 
             {/* Copyright Line */}
             <div className="max-w-5xl mx-auto mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-[#D0E2FF]/60 text-center text-xs text-[#16377D] font-medium opacity-70">
-                © {new Date().getFullYear()} Mrvieera Illustration. All rights reserved.
+                <Link
+                    to="/login"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    className="cursor-default select-none px-1"
+                >
+                    ©
+                </Link>{" "}
+                {new Date().getFullYear()} Mrvieera Illustration. All rights reserved.
             </div>
         </footer>
     );

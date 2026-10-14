@@ -29,10 +29,12 @@ const defaultCommissionData = {
 export default function Commission() {
     // 2. Ambil data dari Context dengan nama variabel yang sesuai (commissionData & commissionStatus)
     const context = useContext(AppContext) || {};
-    const { commissionData: adminPrices, commissionStatus } = context;
+    const { commissionData: adminPrices, commissionStatus, spreadsheet } = context;
 
-    // Status open/closed
-    const isCommissionOpen = commissionStatus ? commissionStatus === "OPEN" : true;
+    // Status: OPEN / WAITLIST / CLOSED
+    const status = commissionStatus || "OPEN";
+    const isClosed = status === "CLOSED";
+    const isWaitlist = status === "WAITLIST";
 
     // 3. Gunakan data dari Admin jika ada, jika tidak gunakan defaultCommissionData
     const commissionData = (adminPrices && Object.keys(adminPrices).length > 0)
@@ -60,8 +62,11 @@ export default function Commission() {
     const activeImage = artworksList[selectedImgIndex] || artworksList[0] || "";
 
     // Format pesan & link WhatsApp dinamis
+    const priceInfo = `(${currentCategory.idr || "-"} / ${currentCategory.usd || "-"})`;
     const waMessage = encodeURIComponent(
-        `Halo! Saya ingin pesan commission kategori *${activeTab}* (${currentCategory.idr || '-'} / ${currentCategory.usd || '-'}).`
+        isWaitlist
+            ? `Halo! Saya ingin masuk waitlist dengan kategori *${activeTab}* ${priceInfo}.`
+            : `Halo! Saya ingin pesan commission kategori *${activeTab}* ${priceInfo}.`
     );
     const waLink = `https://wa.me/6285111342521?text=${waMessage}`;
 
@@ -203,20 +208,22 @@ export default function Commission() {
 
                 <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                    {/* Main Image Preview */}
-                    <div className="lg:col-span-6 aspect-[5/4] bg-gray-200 rounded-2xl overflow-hidden shadow-sm border border-gray-200 flex items-center justify-center">
-                        {activeImage ? (
-                            <img
-                                src={activeImage}
-                                alt={activeTab}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.currentTarget.src = "https://via.placeholder.com/400x500?text=Artwork+Preview";
-                                }}
-                            />
-                        ) : (
-                            <span className="text-gray-500 font-medium">No Image Available</span>
-                        )}
+                    {/* Main Image Preview + Link Spreadsheet */}
+                    <div className="lg:col-span-6">
+                        <div className="aspect-[5/4] bg-gray-200 rounded-2xl overflow-hidden shadow-sm border border-gray-200 flex items-center justify-center">
+                            {activeImage ? (
+                                <img
+                                    src={activeImage}
+                                    alt={activeTab}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.currentTarget.src = "https://via.placeholder.com/400x500?text=Artwork+Preview";
+                                    }}
+                                />
+                            ) : (
+                                <span className="text-gray-500 font-medium">No Image Available</span>
+                            )}
+                        </div>
                     </div>
 
                     {/* Thumbnails Sidebar */}
@@ -278,14 +285,14 @@ export default function Commission() {
                         </div>
 
                         {/* WhatsApp CTA */}
-                        {isCommissionOpen ? (
+                        {!isClosed ? (
                             <a
                                 href={waLink}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="w-full bg-[#3B82F6] hover:bg-[#60A5FA] text-white font-bold py-3 rounded-xl text-center transition-colors shadow-sm block"
                             >
-                                Order via Whatsapp
+                                {isWaitlist ? "Join Waitlist via Whatsapp" : "Order via Whatsapp"}
                             </a>
                         ) : (
                             <button
@@ -298,6 +305,17 @@ export default function Commission() {
                     </div>
 
                 </div>
+
+                {spreadsheet?.url && (
+                    <a
+                        href={spreadsheet.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-8 inline-block text-center text-sm sm:text-base font-semibold text-[#16377D] underline underline-offset-4 hover:text-[#3B82F6] transition-colors"
+                    >
+                        {spreadsheet.label || "Lihat spreadsheet"}
+                    </a>
+                )}
             </div>
 
             {/* Alternative Contact Section */}

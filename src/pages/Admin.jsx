@@ -8,11 +8,19 @@ const input =
 const btnBlue =
     "bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold rounded-xl text-sm transition-all cursor-pointer active:scale-95 disabled:opacity-60";
 
+const STATUS_OPTIONS = [
+    { value: "OPEN", desc: "Menerima pesanan", active: "bg-emerald-500 text-white border-emerald-500" },
+    { value: "WAITLIST", desc: "Pesanan masuk daftar tunggu", active: "bg-amber-500 text-white border-amber-500" },
+    { value: "CLOSED", desc: "Tidak menerima pesanan", active: "bg-rose-500 text-white border-rose-500" },
+];
+
 export default function Admin() {
     const {
         logout,
         commissionStatus,
         setCommissionStatus,
+        spreadsheet,
+        updateSpreadsheet,
         artworks,
         addArtwork,
         deleteArtwork,
@@ -24,6 +32,15 @@ export default function Admin() {
 
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+
+    // ----- Spreadsheet form -----
+    const [sheetLabel, setSheetLabel] = useState("");
+    const [sheetUrl, setSheetUrl] = useState("");
+
+    useEffect(() => {
+        setSheetLabel(spreadsheet.label || "");
+        setSheetUrl(spreadsheet.url || "");
+    }, [spreadsheet]);
 
     // ----- Artwork form -----
     const [newTitle, setNewTitle] = useState("");
@@ -78,9 +95,19 @@ export default function Admin() {
         if (!res.ok) alert("Gagal menghapus: " + res.error);
     };
 
-    const handleToggleStatus = async () => {
-        const res = await setCommissionStatus(commissionStatus === "OPEN" ? "CLOSED" : "OPEN");
+    const handleSetStatus = async (status) => {
+        if (status === commissionStatus) return;
+        const res = await setCommissionStatus(status);
         if (!res.ok) alert("Gagal mengubah status: " + res.error);
+    };
+
+    const handleSaveSpreadsheet = async (e) => {
+        e.preventDefault();
+        let url = sheetUrl.trim();
+        // Kalau lupa menulis https://, tambahkan otomatis
+        if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+        const res = await updateSpreadsheet(sheetLabel.trim(), url);
+        alert(res.ok ? "Link spreadsheet berhasil disimpan!" : "Gagal: " + res.error);
     };
 
     const handleUpdatePrice = async (e) => {
@@ -129,32 +156,64 @@ export default function Admin() {
 
                 {/* 1. Status */}
                 <section className={card}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h2 className="text-lg font-bold">1. Status Commission</h2>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                                Tersimpan di database, langsung tampil ke semua pengunjung.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3 bg-[#F0F6FF] p-2.5 rounded-xl border border-[#D0E2FF]">
-                            <span
-                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${commissionStatus === "OPEN"
-                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
-                                    : "bg-rose-100 text-rose-700 border border-rose-300"
-                                    }`}
-                            >
-                                {commissionStatus}
-                            </span>
-                            <button onClick={handleToggleStatus} className={`${btnBlue} px-3.5 py-1.5 text-xs`}>
-                                Ubah ke {commissionStatus === "OPEN" ? "CLOSED" : "OPEN"}
-                            </button>
-                        </div>
+                    <h2 className="text-lg font-bold">1. Status Commission</h2>
+                    <p className="text-xs text-gray-500 mt-0.5 mb-4">
+                        Tersimpan di database, langsung tampil ke semua pengunjung.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {STATUS_OPTIONS.map((opt) => {
+                            const isActive = commissionStatus === opt.value;
+                            return (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => handleSetStatus(opt.value)}
+                                    className={`text-left p-4 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${isActive
+                                        ? opt.active
+                                        : "bg-[#F0F6FF] border-[#D0E2FF] text-[#16377D] hover:border-[#3B82F6]"
+                                        }`}
+                                >
+                                    <div className="font-bold text-sm">{opt.value}</div>
+                                    <div className={`text-xs mt-0.5 ${isActive ? "text-white/90" : "text-gray-500"}`}>
+                                        {opt.desc}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </section>
 
-                {/* 2. Harga */}
+                {/* 2. Link Spreadsheet */}
                 <section className={card}>
-                    <h2 className="text-lg font-bold mb-1">2. Kelola Harga Commission</h2>
+                    <h2 className="text-lg font-bold mb-1">2. Link Spreadsheet</h2>
+                    <p className="text-xs text-gray-500 mb-5">
+                        Tampil sebagai teks yang bisa diklik di bawah gambar utama halaman Commission. Kosongkan link untuk menyembunyikannya.
+                    </p>
+                    <form onSubmit={handleSaveSpreadsheet} className="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
+                        <div className="sm:col-span-2">
+                            <label className="block text-xs font-bold mb-1.5 text-gray-700">Teks yang tampil</label>
+                            <input
+                                className={input}
+                                value={sheetLabel}
+                                onChange={(e) => setSheetLabel(e.target.value)}
+                                placeholder="Contoh: Mrvieer Commission List"
+                            />
+                        </div>
+                        <div className="sm:col-span-2">
+                            <label className="block text-xs font-bold mb-1.5 text-gray-700">Link spreadsheet</label>
+                            <input
+                                className={input}
+                                value={sheetUrl}
+                                onChange={(e) => setSheetUrl(e.target.value)}
+                                placeholder="https://docs.google.com/spreadsheets/..."
+                            />
+                        </div>
+                        <button type="submit" className={`${btnBlue} p-2.5`}>Simpan Link</button>
+                    </form>
+                </section>
+
+                {/* 3. Harga */}
+                <section className={card}>
+                    <h2 className="text-lg font-bold mb-1">3. Kelola Harga Commission</h2>
                     <p className="text-xs text-gray-500 mb-5">Tambah, ubah, atau hapus kategori harga.</p>
 
                     {categories.length > 0 && (
@@ -203,9 +262,9 @@ export default function Admin() {
                     </form>
                 </section>
 
-                {/* 3. Gallery */}
+                {/* 4. Gallery */}
                 <section className={card}>
-                    <h2 className="text-lg font-bold mb-1">3. Kelola Gallery Artworks</h2>
+                    <h2 className="text-lg font-bold mb-1">4. Kelola Gallery Artworks</h2>
                     <p className="text-xs text-gray-500 mb-5">Gambar diunggah ke Supabase Storage.</p>
 
                     <form onSubmit={handleAddArtwork} className="bg-[#F8FAFC] p-5 rounded-2xl border border-gray-200 mb-8 space-y-4">
