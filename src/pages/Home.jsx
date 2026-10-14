@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { artworks } from "../data/artworks";
 import { useApp } from "../context/AppContext";
 
 export default function Home() {

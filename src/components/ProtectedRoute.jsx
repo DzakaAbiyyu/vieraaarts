@@ -2,13 +2,20 @@ import { Navigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
 export default function ProtectedRoute({ children }) {
-    const { isAuthenticated } = useApp();
+    const { isAuthenticated, authLoading } = useApp();
 
-    // Jika belum login, lempar ke /login menggunakan komponen <Navigate />
+    // Tunggu Supabase selesai mengecek sesi, supaya tidak mental ke /login saat refresh
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-[#16377D]">
+                Memuat...
+            </div>
+        );
+    }
+
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    // Jika sudah login, tampilkan halaman anak (Admin)
     return children;
 }

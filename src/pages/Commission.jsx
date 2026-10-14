@@ -44,13 +44,15 @@ export default function Commission() {
     const [activeTab, setActiveTab] = useState(categories[0]);
     const [selectedImgIndex, setSelectedImgIndex] = useState(0);
 
-    // 4. Efek pengaman: Jika Admin mengubah nama kategori dan tab aktif saat ini hilang, reset ke kategori pertama
+    // 4. Efek pengaman: Menggunakan categoriesKey agar dependency array stabil
+    const categoriesKey = categories.join("|");
     useEffect(() => {
         if (!categories.includes(activeTab)) {
             setActiveTab(categories[0]);
             setSelectedImgIndex(0);
         }
-    }, [categories, activeTab]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [categoriesKey, activeTab]);
 
     // 5. Perlindungan data bersarang (Nested Data Protection)
     const currentCategory = commissionData[activeTab] || commissionData[categories[0]] || {};
@@ -81,7 +83,7 @@ export default function Commission() {
                 </p>
             </div>
 
-            {/* Rules Section (Tetap sama) */}
+            {/* Rules Section */}
             <div className="w-full max-w-5xl flex flex-col items-center mb-16 sm:mb-20">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#16377D] mb-6 sm:mb-8 text-center">
                     Let's <span className="font-bold text-[#16377D]">read</span> before commissioning!
@@ -275,7 +277,7 @@ export default function Commission() {
                             </div>
                         </div>
 
-                        {/* WhatsApp CTA dengan tombol dinamis dari Admin (Open/Close) */}
+                        {/* WhatsApp CTA */}
                         {isCommissionOpen ? (
                             <a
                                 href={waLink}
@@ -298,7 +300,7 @@ export default function Commission() {
                 </div>
             </div>
 
-            {/* Alternative Contact Section (Tetap sama) */}
+            {/* Alternative Contact Section */}
             <div className="w-full max-w-5xl flex flex-col mb-12 relative">
                 <div className="w-full max-w-5xl z-10">
                     <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-[#16377D] mb-4 sm:mb-6">
