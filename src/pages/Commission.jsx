@@ -120,7 +120,7 @@ export default function Commission() {
                                     <span>Nekomimi / slight mecha</span>
                                 </li>
                                 <li className="flex items-center gap-2.5">
-                                    <img src="/webdesign/x-circle.png" alt="cannot" className="w-5 h-5 object-contain shrink-0" />
+                                    <img src="/webdesign/check-circle.png" alt="check" className="w-5 h-5 object-contain shrink-0" />
                                     <span>Furry</span>
                                 </li>
                             </ul>
