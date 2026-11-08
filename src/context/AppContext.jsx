@@ -197,6 +197,25 @@ export function AppProvider({ children }) {
         return { ok: true };
     };
 
+    // Tambahkan fungsi ini di AppContext.jsx, setelah fungsi deleteCommissionCategory
+
+    const updateCommissionArtworks = async (category, artworkUrls) => {
+        const { error } = await supabase
+            .from("commission_prices")
+            .update({ artworks: artworkUrls })
+            .eq("category", category);
+        if (error) return { ok: false, error: error.message };
+        setCommissionData((prev) => ({
+            ...prev,
+            [category]: { ...prev[category], artworks: artworkUrls },
+        }));
+        return { ok: true };
+    };
+
+    // Jangan lupa tambahkan updateCommissionArtworks ke value AppContext.Provider:
+    // value={{ ..., updateCommissionArtworks }}
+
+
     return (
         <AppContext.Provider
             value={{

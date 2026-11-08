@@ -5,23 +5,15 @@ import { AppContext } from "../context/AppContext";
 // 1. Jadikan data hardcoded sebagai FALLBACK (cadangan)
 const defaultCommissionData = {
     "Bust Up": {
-        idr: "Rp 70k",
-        usd: "$15",
         artworks: ["/artworks/4_5-artwork-7.png", "/artworks/4_5-artwork-9.png"],
     },
     "Half Body": {
-        idr: "Rp 90k",
-        usd: "$20",
         artworks: ["/artworks/4_5-artwork-1.png"],
     },
     "Knee Up": {
-        idr: "Rp 120k",
-        usd: "$25",
         artworks: ["/artworks/4_5-artwork-2.png", "/artworks/4_5-artwork-3.png"],
     },
     "Full body": {
-        idr: "Rp 150k",
-        usd: "$35",
         artworks: ["/artworks/4_5-artwork-5.png", "/artworks/4_5-artwork-6.png"],
     },
 };
@@ -123,6 +115,18 @@ export default function Commission() {
                                     <img src="/webdesign/check-circle.png" alt="check" className="w-5 h-5 object-contain shrink-0" />
                                     <span>Furry</span>
                                 </li>
+                                <li className="flex items-center gap-2.5">
+                                    <img src="/webdesign/check-circle.png" alt="check" className="w-5 h-5 object-contain shrink-0" />
+                                    <span>sketch/lineart</span>
+                                </li>
+                                <li className="flex items-center gap-2.5">
+                                    <img src="/webdesign/check-circle.png" alt="check" className="w-5 h-5 object-contain shrink-0" />
+                                    <span>coloured sketch/lineart</span>
+                                </li>
+                                <li className="flex items-center gap-2.5">
+                                    <img src="/webdesign/check-circle.png" alt="check" className="w-5 h-5 object-contain shrink-0" />
+                                    <span>chibi</span>
+                                </li>
                             </ul>
                         </div>
 
@@ -157,10 +161,10 @@ export default function Commission() {
                     <div className="bg-[#EBF3FC] border border-[#D0E2FF] rounded-2xl p-5 sm:p-6">
                         <h3 className="text-lg sm:text-xl font-bold text-[#16377D] mb-3">Terms of service</h3>
                         <ul className="list-disc list-inside space-y-1.5 text-[#16377D] font-medium text-sm sm:text-base">
-                            <li>Payment is made after the lineart stage.</li>
-                            <li>No refunds once payment is sent.</li>
+                            <li>No refunds after the sketch / lineart stage.</li>
+                            <li>If there's been an unusually long delay on my end, a refund will be issued along with compensation for the wait.</li>
                             <li>Finished pieces may be posted as samples — let me know if you'd like yours kept private.</li>
-                            <li>Final high-res file is delivered by Gmail, not Drive.</li>
+                            <li>Final high-res file is delivered via Gmail, not Drive.</li>
                         </ul>
                     </div>
 

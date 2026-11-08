@@ -5,8 +5,6 @@ import { useApp } from "../context/AppContext";
 export default function Home() {
     const { commissionStatus, commissionData, artworks } = useApp();
 
-    // Nama bulan otomatis, berganti sendiri tiap bulan.
-    // Mau bahasa Indonesia (Oktober)? Ganti "en-US" menjadi "id-ID".
     const monthName = new Date().toLocaleString("en-US", { month: "long" });
 
     const statusColors = {
@@ -15,14 +13,10 @@ export default function Home() {
         CLOSED: "text-red-500",
     };
 
-    // Artwork 16:9 untuk bagian "latest artwork"
     const latestArtworks = artworks
         .filter((artwork) => artwork.ratio === "16:9")
         .slice(0, 3);
 
-    // Preview commission di Home: satu gambar per kategori.
-    // Mau ganti gambarnya? Ubah angka N pada "4_5-artwork-N.png".
-    // "category" harus sama dengan nama kategori di Admin (untuk mengambil harga).
     const previewItems = [
         { category: "Bust Up", label: "Bust Up", image: "/artworks/4_5-artwork-7.png", fallbackPrice: "Rp 70k / $15" },
         { category: "Half Body", label: "Half Body", image: "/artworks/4_5-artwork-1.png", fallbackPrice: "Rp 90k / $20" },
@@ -30,13 +24,45 @@ export default function Home() {
         { category: "Full body", label: "Full Body", image: "/artworks/4_5-artwork-6.png", fallbackPrice: "Rp 150k / $35" },
     ];
 
-    // Harga diambil dari database (yang diedit di Admin), kalau belum ada pakai harga cadangan
     const getPrice = (item) => {
         const data = commissionData?.[item.category];
         return data ? `${data.idr} / ${data.usd}` : item.fallbackPrice;
     };
 
     const [currentSlide, setCurrentSlide] = useState(0);
+
+    const steps = [
+        {
+            num: "01",
+            title: "Choose Your Order",
+            desc: "Pick your commission type (Bust Up / Half / Knee / Full Body) and whether it's single or couple. Feel free to ask first — price is negotiable!",
+        },
+        {
+            num: "02",
+            title: "Send References",
+            desc: "Send your character ref (pose, outfit, expression), environment details (colour, background), and canvas type (DPI / resolution).",
+        },
+        {
+            num: "03",
+            title: "Discuss & Agree on Price",
+            desc: "We'll talk through the details and finalize the price. Once we agree, I'll start on the sketch!",
+        },
+        {
+            num: "04",
+            title: "Sketch & Payment",
+            desc: "For complex orders, payment (or DP) is due at the sketch stage. For simpler ones, payment is after lineart. Either way, we'll figure it out together.",
+        },
+        {
+            num: "05",
+            title: "Progress Updates",
+            desc: "I'll keep you updated at every stage — sketch → lineart → base → render — to minimize miscommunication.",
+        },
+        {
+            num: "06",
+            title: "Final Delivery",
+            desc: "Once everything's done and payment is settled, the finished high-res file will be sent straight to your Gmail.",
+        },
+    ];
 
     return (
         <main className="min-h-screen bg-[#F2F9FD] text-[#16377D] pb-16 sm:pb-24 font-sans overflow-x-hidden ">
@@ -73,7 +99,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* Main Character Illustration (Sembunyi di HP, Sejajar Presisi di Desktop) */}
+                {/* Main Character Illustration */}
                 <div className="hidden md:flex relative justify-center items-center w-1/2">
                     <img
                         src="/webdesign/hero-images.png"
@@ -85,7 +111,7 @@ export default function Home() {
 
 
             {/* =====================================================
-                LATEST ARTWORK (CAROUSEL - Lock Rasio 16:9 Tanpa Crop)
+                LATEST ARTWORK (CAROUSEL)
             ====================================================== */}
             <section className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-[6%] mt-8 sm:mt-16">
 
@@ -95,35 +121,31 @@ export default function Home() {
 
                 <div className="relative mx-auto mt-6 sm:mt-8 w-full max-w-[1100px]">
 
-                    {/* Slider Window (Kunci Aspek Rasio 16:9) */}
                     <div className="overflow-hidden rounded-2xl shadow-sm border border-[#D0E2FF] bg-white aspect-[16/9] w-full">
-                        <div
-                            className="flex transition-transform duration-500 ease-in-out h-full"
-                            style={{
-                                transform: `translateX(-${currentSlide * 100}%)`,
-                            }}
-                        >
-                            {latestArtworks.map((artwork) => (
-                                <div key={artwork.id} className="min-w-full shrink-0 h-full bg-white flex items-center justify-center">
-                                    <img
-                                        src={artwork.image}
-                                        alt={artwork.title || "Latest Artwork"}
-                                        className="w-full h-full object-contain aspect-[16/9]"
-                                    />
-                                </div>
-                            ))}
-                        </div>
+                        {latestArtworks.length > 0 ? (
+                            <div
+                                className="flex transition-transform duration-500 ease-in-out h-full"
+                                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                            >
+                                {latestArtworks.map((artwork) => (
+                                    <div key={artwork.id} className="min-w-full shrink-0 h-full bg-white flex items-center justify-center">
+                                        <img
+                                            src={artwork.image}
+                                            alt={artwork.title || "Latest Artwork"}
+                                            className="w-full h-full object-contain aspect-[16/9]"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                                No artwork yet.
+                            </div>
+                        )}
                     </div>
 
-                    {/* Navigation Buttons */}
                     <button
-                        onClick={() =>
-                            setCurrentSlide(
-                                currentSlide === 0
-                                    ? latestArtworks.length - 1
-                                    : currentSlide - 1
-                            )
-                        }
+                        onClick={() => setCurrentSlide(currentSlide === 0 ? latestArtworks.length - 1 : currentSlide - 1)}
                         className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-all hover:scale-110 cursor-pointer"
                         aria-label="Previous artwork"
                     >
@@ -133,13 +155,7 @@ export default function Home() {
                     </button>
 
                     <button
-                        onClick={() =>
-                            setCurrentSlide(
-                                currentSlide === latestArtworks.length - 1
-                                    ? 0
-                                    : currentSlide + 1
-                            )
-                        }
+                        onClick={() => setCurrentSlide(currentSlide === latestArtworks.length - 1 ? 0 : currentSlide + 1)}
                         className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-all hover:scale-110 cursor-pointer"
                         aria-label="Next artwork"
                     >
@@ -150,22 +166,17 @@ export default function Home() {
 
                 </div>
 
-                {/* Slider Dots */}
                 <div className="mt-4 sm:mt-5 flex justify-center gap-2">
                     {latestArtworks.map((artwork, index) => (
                         <button
                             key={artwork.id}
                             onClick={() => setCurrentSlide(index)}
                             aria-label={`Go to slide ${index + 1}`}
-                            className={`h-2.5 rounded-full transition-all cursor-pointer ${currentSlide === index
-                                ? "w-8 bg-[#16377D]"
-                                : "w-2.5 bg-[#BBD7EE]"
-                                }`}
+                            className={`h-2.5 rounded-full transition-all cursor-pointer ${currentSlide === index ? "w-8 bg-[#16377D]" : "w-2.5 bg-[#BBD7EE]"}`}
                         />
                     ))}
                 </div>
 
-                {/* Gallery Link */}
                 <div className="mt-6 sm:mt-8 flex justify-center">
                     <Link
                         to="/gallery"
@@ -173,11 +184,7 @@ export default function Home() {
                     >
                         <span>Check my full gallery</span>
                         <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full">
-                            <img
-                                src="/webdesign/arrow_circle_right.png"
-                                alt="Next artwork"
-                                className="h-full w-full object-contain"
-                            />
+                            <img src="/webdesign/arrow_circle_right.png" alt="Next artwork" className="h-full w-full object-contain" />
                         </span>
                     </Link>
                 </div>
@@ -186,7 +193,7 @@ export default function Home() {
 
 
             {/* =====================================================
-                COMMISSION PREVIEW SECTION (Lock Rasio 4:5 Tanpa Crop)
+                COMMISSION PREVIEW SECTION
             ====================================================== */}
             <section className="mx-auto mt-16 sm:mt-24 w-full max-w-[1440px] px-5 sm:px-6 lg:px-[6%]">
 
@@ -202,14 +209,9 @@ export default function Home() {
                     </p>
                 </div>
 
-                {/* Grid Preview (Rasio Asli 4:5 Dijaga) */}
                 <div className="mx-auto mt-8 sm:mt-10 grid max-w-[1100px] grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {previewItems.map((item) => (
-                        <div
-                            key={item.category}
-                            className="group flex flex-col cursor-default"
-                        >
-                            {/* Container Gambar Kunci 4:5 + Object Contain */}
+                        <div key={item.category} className="group flex flex-col cursor-default">
                             <div className="overflow-hidden rounded-2xl aspect-[5/4] bg-gray-100 border border-[#D0E2FF] flex items-center justify-center">
                                 <img
                                     src={item.image}
@@ -217,21 +219,14 @@ export default function Home() {
                                     className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
                                 />
                             </div>
-
-                            {/* Text Info Below Image */}
                             <div className="mt-2.5 sm:mt-3 px-1">
-                                <h3 className="font-bold text-sm sm:text-base text-[#16377D]">
-                                    {item.label}
-                                </h3>
-                                <p className="text-xs sm:text-sm font-semibold text-[#3B82F6]">
-                                    {getPrice(item)}
-                                </p>
+                                <h3 className="font-bold text-sm sm:text-base text-[#16377D]">{item.label}</h3>
+                                <p className="text-xs sm:text-sm font-semibold text-[#3B82F6]">{getPrice(item)}</p>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Commission CTA Button */}
                 <div className="mt-8 sm:mt-12 flex justify-center">
                     <Link
                         to="/commission"
@@ -256,47 +251,23 @@ export default function Home() {
                     </h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 relative">
-
-                    {/* Step 1 */}
-                    <div className="flex flex-col items-start p-5 sm:p-7 rounded-2xl bg-white/70 border border-[#D0E2FF] hover:border-[#3B82F6] transition-all duration-300 hover:shadow-md">
-                        <span className="text-3xl sm:text-4xl font-black text-[#3B82F6]/30 mb-2 sm:mb-3">
-                            01
-                        </span>
-                        <h3 className="font-bold text-base sm:text-lg text-[#16377D] mb-1">
-                            Send Details
-                        </h3>
-                        <p className="text-xs sm:text-sm text-[#16377D]/75 leading-relaxed">
-                            Reach out via WhatsApp or X with your character references, pose ideas, and desired category.
-                        </p>
-                    </div>
-
-                    {/* Step 2 */}
-                    <div className="flex flex-col items-start p-5 sm:p-7 rounded-2xl bg-white/70 border border-[#D0E2FF] hover:border-[#3B82F6] transition-all duration-300 hover:shadow-md">
-                        <span className="text-3xl sm:text-4xl font-black text-[#3B82F6]/30 mb-2 sm:mb-3">
-                            02
-                        </span>
-                        <h3 className="font-bold text-base sm:text-lg text-[#16377D] mb-1">
-                            Sketch & Payment
-                        </h3>
-                        <p className="text-xs sm:text-sm text-[#16377D]/75 leading-relaxed">
-                            I'll send a rough sketch for approval. Payment is processed once lineart stage is approved.
-                        </p>
-                    </div>
-
-                    {/* Step 3 */}
-                    <div className="flex flex-col items-start p-5 sm:p-7 rounded-2xl bg-white/70 border border-[#D0E2FF] hover:border-[#3B82F6] transition-all duration-300 hover:shadow-md">
-                        <span className="text-3xl sm:text-4xl font-black text-[#3B82F6]/30 mb-2 sm:mb-3">
-                            03
-                        </span>
-                        <h3 className="font-bold text-base sm:text-lg text-[#16377D] mb-1">
-                            Final Delivery
-                        </h3>
-                        <p className="text-xs sm:text-sm text-[#16377D]/75 leading-relaxed">
-                            Once fully rendered, high-resolution files will be sent straight to your email.
-                        </p>
-                    </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {steps.map((step) => (
+                        <div
+                            key={step.num}
+                            className="flex flex-col items-start p-5 sm:p-7 rounded-2xl bg-white/70 border border-[#D0E2FF] hover:border-[#3B82F6] transition-all duration-300 hover:shadow-md"
+                        >
+                            <span className="text-3xl sm:text-4xl font-black text-[#3B82F6]/30 mb-2 sm:mb-3">
+                                {step.num}
+                            </span>
+                            <h3 className="font-bold text-base sm:text-lg text-[#16377D] mb-1">
+                                {step.title}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-[#16377D]/75 leading-relaxed">
+                                {step.desc}
+                            </p>
+                        </div>
+                    ))}
                 </div>
 
             </section>
