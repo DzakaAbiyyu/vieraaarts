@@ -28,6 +28,7 @@ export default function Admin() {
         updateCommissionCategory,
         addCommissionCategory,
         deleteCommissionCategory,
+        updateCommissionArtworks,
     } = useApp();
 
     const navigate = useNavigate();
@@ -56,7 +57,10 @@ export default function Admin() {
     const [editUsd, setEditUsd] = useState("");
     const [newCat, setNewCat] = useState("");
 
-    // Pilih kategori pertama & isi form setelah data dari database dimuat
+    // ----- Artwork picker per kategori -----
+    const [pickerCat, setPickerCat] = useState("");
+    const [pickerSelected, setPickerSelected] = useState([]);
+
     useEffect(() => {
         if (categories.length === 0) return;
         const cat = categories.includes(selectedCat) ? selectedCat : categories[0];
@@ -65,6 +69,29 @@ export default function Admin() {
         setEditUsd(commissionData[cat]?.usd || "");
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [commissionData, selectedCat]);
+
+    // Sync picker saat kategori picker berubah
+    useEffect(() => {
+        if (!pickerCat) {
+            if (categories.length > 0) setPickerCat(categories[0]);
+            return;
+        }
+        setPickerSelected(commissionData[pickerCat]?.artworks || []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pickerCat, commissionData]);
+
+    const togglePickerImage = (imageUrl) => {
+        setPickerSelected((prev) =>
+            prev.includes(imageUrl)
+                ? prev.filter((u) => u !== imageUrl)
+                : [...prev, imageUrl]
+        );
+    };
+
+    const handleSaveArtworks = async () => {
+        const res = await updateCommissionArtworks(pickerCat, pickerSelected);
+        alert(res.ok ? "Sample artwork berhasil disimpan!" : "Gagal: " + res.error);
+    };
 
     const handleFileChange = (e) => {
         const f = e.target.files?.[0];
@@ -76,13 +103,10 @@ export default function Admin() {
     const handleAddArtwork = async (e) => {
         e.preventDefault();
         if (!newTitle || !file) return alert("Harap isi judul dan pilih file gambar!");
-
         setUploading(true);
         const res = await addArtwork({ title: newTitle, ratio: newRatio, file });
         setUploading(false);
-
         if (!res.ok) return alert("Gagal mengunggah: " + res.error);
-
         setNewTitle("");
         setFile(null);
         setPreview("");
@@ -104,7 +128,6 @@ export default function Admin() {
     const handleSaveSpreadsheet = async (e) => {
         e.preventDefault();
         let url = sheetUrl.trim();
-        // Kalau lupa menulis https://, tambahkan otomatis
         if (url && !/^https?:\/\//i.test(url)) url = "https://" + url;
         const res = await updateSpreadsheet(sheetLabel.trim(), url);
         alert(res.ok ? "Link spreadsheet berhasil disimpan!" : "Gagal: " + res.error);
@@ -120,7 +143,7 @@ export default function Admin() {
         e.preventDefault();
         const name = newCat.trim();
         if (!name) return;
-        const res = await addCommissionCategory(name, "Rp 0", "$0");
+        const res = await addCommissionCategory(name, "Rp 0", "");
         if (!res.ok) return alert("Gagal menambah kategori: " + res.error);
         setNewCat("");
         setSelectedCat(name);
@@ -135,6 +158,7 @@ export default function Admin() {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16 px-4 sm:px-6 lg:px-8 text-[#16377D]">
             <div className="max-w-6xl mx-auto space-y-8">
+
                 {/* Header */}
                 <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-[#D0E2FF] gap-4">
                     <div>
@@ -144,10 +168,7 @@ export default function Admin() {
                         </p>
                     </div>
                     <button
-                        onClick={async () => {
-                            await logout();
-                            navigate("/");
-                        }}
+                        onClick={async () => { await logout(); navigate("/"); }}
                         className="bg-red-500 hover:bg-red-600 active:scale-95 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer"
                     >
                         Logout
@@ -167,10 +188,7 @@ export default function Admin() {
                                 <button
                                     key={opt.value}
                                     onClick={() => handleSetStatus(opt.value)}
-                                    className={`text-left p-4 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${isActive
-                                        ? opt.active
-                                        : "bg-[#F0F6FF] border-[#D0E2FF] text-[#16377D] hover:border-[#3B82F6]"
-                                        }`}
+                                    className={`text-left p-4 rounded-xl border transition-all cursor-pointer active:scale-[0.98] ${isActive ? opt.active : "bg-[#F0F6FF] border-[#D0E2FF] text-[#16377D] hover:border-[#3B82F6]"}`}
                                 >
                                     <div className="font-bold text-sm">{opt.value}</div>
                                     <div className={`text-xs mt-0.5 ${isActive ? "text-white/90" : "text-gray-500"}`}>
@@ -186,26 +204,16 @@ export default function Admin() {
                 <section className={card}>
                     <h2 className="text-lg font-bold mb-1">2. Link Spreadsheet</h2>
                     <p className="text-xs text-gray-500 mb-5">
-                        Tampil sebagai teks yang bisa diklik di bawah gambar utama halaman Commission. Kosongkan link untuk menyembunyikannya.
+                        Tampil sebagai teks yang bisa diklik di bawah gambar utama halaman Commission.
                     </p>
                     <form onSubmit={handleSaveSpreadsheet} className="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-bold mb-1.5 text-gray-700">Teks yang tampil</label>
-                            <input
-                                className={input}
-                                value={sheetLabel}
-                                onChange={(e) => setSheetLabel(e.target.value)}
-                                placeholder="Contoh: Mrvieer Commission List"
-                            />
+                            <input className={input} value={sheetLabel} onChange={(e) => setSheetLabel(e.target.value)} placeholder="Contoh: Mrvieer Commission List" />
                         </div>
                         <div className="sm:col-span-2">
                             <label className="block text-xs font-bold mb-1.5 text-gray-700">Link spreadsheet</label>
-                            <input
-                                className={input}
-                                value={sheetUrl}
-                                onChange={(e) => setSheetUrl(e.target.value)}
-                                placeholder="https://docs.google.com/spreadsheets/..."
-                            />
+                            <input className={input} value={sheetUrl} onChange={(e) => setSheetUrl(e.target.value)} placeholder="https://docs.google.com/spreadsheets/..." />
                         </div>
                         <button type="submit" className={`${btnBlue} p-2.5`}>Simpan Link</button>
                     </form>
@@ -220,14 +228,8 @@ export default function Admin() {
                         <form onSubmit={handleUpdatePrice} className="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
                             <div>
                                 <label className="block text-xs font-bold mb-1.5 text-gray-700">Kategori</label>
-                                <select
-                                    value={selectedCat}
-                                    onChange={(e) => setSelectedCat(e.target.value)}
-                                    className={input}
-                                >
-                                    {categories.map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
+                                <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} className={input}>
+                                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div>
@@ -236,35 +238,91 @@ export default function Admin() {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold mb-1.5 text-gray-700">Harga USD</label>
-                                <input className={input} value={editUsd} onChange={(e) => setEditUsd(e.target.value)} placeholder="$15" required />
+                                <input className={input} value={editUsd} onChange={(e) => setEditUsd(e.target.value)} placeholder="$15 (opsional)" />
                             </div>
                             <button type="submit" className={`${btnBlue} p-2.5`}>Simpan Harga</button>
-                            <button
-                                type="button"
-                                onClick={handleDeleteCategory}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold p-2.5 rounded-xl text-sm border border-red-200 cursor-pointer"
-                            >
+                            <button type="button" onClick={handleDeleteCategory} className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold p-2.5 rounded-xl text-sm border border-red-200 cursor-pointer">
                                 Hapus Kategori
                             </button>
                         </form>
                     )}
 
                     <form onSubmit={handleAddCategory} className="mt-6 flex flex-col sm:flex-row gap-3">
-                        <input
-                            className={input}
-                            value={newCat}
-                            onChange={(e) => setNewCat(e.target.value)}
-                            placeholder="Nama kategori baru, contoh: Chibi"
-                        />
-                        <button type="submit" className={`${btnBlue} px-5 py-2.5 whitespace-nowrap`}>
-                            + Tambah Kategori
-                        </button>
+                        <input className={input} value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="Nama kategori baru, contoh: Chibi" />
+                        <button type="submit" className={`${btnBlue} px-5 py-2.5 whitespace-nowrap`}>+ Tambah Kategori</button>
                     </form>
                 </section>
 
-                {/* 4. Gallery */}
+                {/* 4. Sample Artwork per Kategori */}
                 <section className={card}>
-                    <h2 className="text-lg font-bold mb-1">4. Kelola Gallery Artworks</h2>
+                    <h2 className="text-lg font-bold mb-1">4. Sample Artwork per Kategori</h2>
+                    <p className="text-xs text-gray-500 mb-5">
+                        Pilih artwork dari gallery untuk ditampilkan sebagai sample di halaman Commission.
+                    </p>
+
+                    {categories.length > 0 && (
+                        <>
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setPickerCat(cat)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all cursor-pointer ${pickerCat === cat ? "bg-[#3B82F6] text-white border-[#3B82F6]" : "bg-[#F0F6FF] text-[#16377D] border-[#D0E2FF] hover:border-[#3B82F6]"}`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {pickerCat && (
+                                <>
+                                    <p className="text-xs font-bold text-gray-500 mb-3">
+                                        Pilih artwork untuk <span className="text-[#3B82F6]">{pickerCat}</span> ({pickerSelected.length} dipilih)
+                                    </p>
+
+                                    {artworks.length === 0 ? (
+                                        <p className="text-sm text-gray-400">Belum ada artwork di gallery.</p>
+                                    ) : (
+                                        <div className="flex flex-row gap-3 overflow-x-auto pb-3 mb-5">
+                                            {artworks.map((art) => {
+                                                const isSelected = pickerSelected.includes(art.image);
+                                                return (
+                                                    <button
+                                                        key={art.id}
+                                                        type="button"
+                                                        onClick={() => togglePickerImage(art.image)}
+                                                        className={`relative w-24 h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${isSelected ? "border-[#3B82F6] scale-95" : "border-transparent opacity-70 hover:opacity-100"}`}
+
+                                                    >
+                                                        <img src={art.image} alt={art.title} className="w-full h-full object-cover" />
+                                                        {isSelected && (
+                                                            <div className="absolute inset-0 bg-[#3B82F6]/30 flex items-center justify-center">
+                                                                <svg className="w-6 h-6 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={handleSaveArtworks}
+                                        className={`${btnBlue} px-6 py-2.5`}
+                                    >
+                                        Simpan Sample untuk {pickerCat}
+                                    </button>
+                                </>
+                            )}
+                        </>
+                    )}
+                </section>
+
+                {/* 5. Gallery */}
+                <section className={card}>
+                    <h2 className="text-lg font-bold mb-1">5. Kelola Gallery Artworks</h2>
                     <p className="text-xs text-gray-500 mb-5">Gambar diunggah ke Supabase Storage.</p>
 
                     <form onSubmit={handleAddArtwork} className="bg-[#F8FAFC] p-5 rounded-2xl border border-gray-200 mb-8 space-y-4">
@@ -275,14 +333,7 @@ export default function Admin() {
                             </div>
                             <div>
                                 <label className="block text-xs font-bold mb-1.5 text-gray-700">File Gambar</label>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="w-full p-1.5 border border-gray-300 rounded-xl text-sm bg-white cursor-pointer"
-                                    required
-                                />
+                                <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="w-full p-1.5 border border-gray-300 rounded-xl text-sm bg-white cursor-pointer" required />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold mb-1.5 text-gray-700">Rasio</label>
@@ -329,10 +380,7 @@ export default function Admin() {
                                                 <span className="bg-gray-100 px-2.5 py-1 rounded-md text-xs font-medium">{art.ratio}</span>
                                             </td>
                                             <td className="p-3.5 text-right">
-                                                <button
-                                                    onClick={() => handleDeleteArtwork(art.id)}
-                                                    className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-3 py-1.5 rounded-lg text-xs border border-red-200 cursor-pointer"
-                                                >
+                                                <button onClick={() => handleDeleteArtwork(art.id)} className="bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-3 py-1.5 rounded-lg text-xs border border-red-200 cursor-pointer">
                                                     Hapus
                                                 </button>
                                             </td>
@@ -340,15 +388,14 @@ export default function Admin() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" className="text-center p-6 text-gray-400 text-sm">
-                                            Belum ada artwork.
-                                        </td>
+                                        <td colSpan="4" className="text-center p-6 text-gray-400 text-sm">Belum ada artwork.</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </section>
+
             </div>
         </div>
     );
